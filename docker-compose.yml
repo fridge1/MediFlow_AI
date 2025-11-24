@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: medical_postgres
+    environment:
+      POSTGRES_DB: medical_db
+      POSTGRES_USER: medical_user
+      POSTGRES_PASSWORD: medical_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medical_user -d medical_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: medical_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI 应用
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medical_api
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://medical_user:medical_pass@postgres:5432/medical_db
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=true
+      - SECRET_KEY=your-secret-key-change-in-production
+      - ENCRYPTION_KEY=your-encryption-key-32-chars!!
+      - JWT_SECRET_KEY=your-jwt-secret-key-change-it
+    volumes:
+      - ./app:/app/app
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
