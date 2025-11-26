@@ -103,7 +103,6 @@ class ModelConfigService:
         cached_config = await UserCache.get_default_model_config(user_id)
         if cached_config and (not provider or cached_config.get("provider") == provider):
             # 从缓存构造对象（简化版）
-            from app.models.model_config import ModelConfig
             config = ModelConfig(**cached_config)
             return config
         
@@ -209,4 +208,3 @@ class ModelConfigService:
         for config in configs:
             config.is_default = False
         await db.flush()
-

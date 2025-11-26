@@ -186,7 +186,7 @@ class ConversationLock:
         return None
     
     @staticmethod
-    async def with_conversation_lock(conversation_id: str, timeout: int = 30):
+    def with_conversation_lock(conversation_id: str, timeout: int = 30):
         """
         会话锁装饰器（用于 async with）
         
@@ -201,4 +201,3 @@ class ConversationLock:
             retry_times=5,
             retry_delay=0.2
         )
-

@@ -8,6 +8,7 @@ import asyncio
 from typing import AsyncGenerator
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.pool import NullPool
 
 # 为测试环境设置必要的环境变量（使用 Postgres 服务，而非本地 SQLite 文件）
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
@@ -74,7 +75,7 @@ class FakeRedis:
 TEST_DATABASE_URL = settings.DATABASE_URL.replace("medical_db", "medical_test_db")
 
 # 创建测试引擎
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
 TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -102,7 +103,8 @@ async def db_session(setup_database) -> AsyncGenerator[AsyncSession, None]:
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """获取测试客户端"""
     async def override_get_db():
-        yield db_session
+        async with TestSessionLocal() as session:
+            yield session
     
     app.dependency_overrides[get_db] = override_get_db
     fake = FakeRedis()
