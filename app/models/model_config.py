@@ -4,18 +4,17 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, JSON, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.database import Base, GUID
 from sqlalchemy.orm import relationship
 
-from app.core.database import Base
 
 
 class ModelConfig(Base):
     """模型配置表"""
     __tablename__ = "model_configs"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     provider = Column(String(50), nullable=False, index=True)  # openai, qwen, deepseek, siliconflow
     model_name = Column(String(100), nullable=False)
     api_key = Column(String(500), nullable=False)  # 加密存储
@@ -37,4 +36,3 @@ class ModelConfig(Base):
     
     def __repr__(self):
         return f"<ModelConfig(id={self.id}, provider={self.provider}, model={self.model_name}, is_default={self.is_default})>"
-

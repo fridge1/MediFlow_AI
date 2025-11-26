@@ -24,6 +24,7 @@ class ApplicationBase(BaseModel):
     
     max_conversation_length: int = 10
     enable_context: bool = True
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class ApplicationCreate(ApplicationBase):

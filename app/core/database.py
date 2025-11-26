@@ -4,18 +4,29 @@
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.types import TypeDecorator, CHAR
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from .config import settings
 
 
-# 创建异步引擎
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    pool_size=10,
-    max_overflow=20,
-    pool_pre_ping=True,
-)
+def _is_sqlite(url: str) -> bool:
+    return url.startswith("sqlite") or "+aiosqlite" in url
+
+# 创建异步引擎（兼容 sqlite 与 postgres）
+if _is_sqlite(settings.DATABASE_URL):
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DEBUG,
+    )
+else:
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DEBUG,
+        pool_size=10,
+        max_overflow=20,
+        pool_pre_ping=True,
+    )
 
 # 创建异步会话工厂
 AsyncSessionLocal = async_sessionmaker(
@@ -28,6 +39,29 @@ AsyncSessionLocal = async_sessionmaker(
 
 # 声明基类
 Base = declarative_base()
+
+# Ensure models are registered for metadata operations
+try:
+    from app.models import User, Application, Conversation, Message, ModelConfig, KBItem  # noqa: F401
+except Exception:
+    pass
+
+
+class GUID(TypeDecorator):
+    impl = CHAR
+    cache_ok = True
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(PG_UUID(as_uuid=True))
+        return dialect.type_descriptor(CHAR(36))
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == "postgresql":
+            return value
+        return str(value)
+    def process_result_value(self, value, dialect):
+        return value
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -55,4 +89,3 @@ async def init_db():
 async def close_db():
     """关闭数据库连接"""
     await engine.dispose()
-

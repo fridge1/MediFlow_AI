@@ -43,7 +43,7 @@ async def create_model_config(
 
 @router.get("")
 async def list_model_configs(
-    provider: Optional[str] = Query(None, regex="^(openai|qwen|deepseek|siliconflow)$"),
+    provider: Optional[str] = Query(None, pattern="^(openai|qwen|deepseek|siliconflow)$"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -121,7 +121,7 @@ async def delete_model_config(
 
 @router.get("/default/config")
 async def get_default_model_config(
-    provider: Optional[str] = Query(None, regex="^(openai|qwen|deepseek|siliconflow)$"),
+    provider: Optional[str] = Query(None, pattern="^(openai|qwen|deepseek|siliconflow)$"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -135,4 +135,3 @@ async def get_default_model_config(
         return {"message": "未设置默认模型配置"}
     
     return ModelConfigResponse.from_orm(config)
-

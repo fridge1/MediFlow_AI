@@ -18,6 +18,7 @@ from app.services.conversation_service import ConversationService
 from app.utils.exceptions import NotFoundException, BadRequestException
 from app.utils.logger import logger
 from app.utils.distributed_lock import ConversationLock
+from app.services.cache_service import ConversationCache
 
 
 class MessageService:
@@ -48,9 +49,13 @@ class MessageService:
         db.add(db_message)
         await db.flush()
         await db.refresh(db_message)
-        
+
         # 更新会话消息计数
         await ConversationService.update_message_count(db, conv_id)
+        try:
+            await ConversationCache.append_message(conv_id, {"role": db_message.role, "content": db_message.content})
+        except Exception:
+            pass
         
         return db_message
     
@@ -242,16 +247,26 @@ class MessageService:
         max_history: int = 20
     ) -> List[Dict[str, str]]:
         """构建消息历史"""
-        messages = []
-        
+        messages: List[Dict[str, str]] = []
+
         # 添加系统提示（如果有）
         if model_config.get("system_prompt"):
-            messages.append({
-                "role": "system",
-                "content": model_config["system_prompt"]
-            })
-        
-        # 获取历史消息
+            messages.append({"role": "system", "content": model_config["system_prompt"]})
+
+        # 优先使用缓存
+        cached = None
+        try:
+            cached = await ConversationCache.get_messages(conv_id)
+        except Exception:
+            cached = None
+
+        if cached:
+            for msg in cached[-max_history:]:
+                if msg.get("role") in ["user", "assistant"] and msg.get("content") is not None:
+                    messages.append({"role": msg["role"], "content": msg["content"]})
+            return messages
+
+        # 缓存不可用时查询数据库
         result = await db.execute(
             select(Message)
             .where(Message.conversation_id == conv_id)
@@ -259,16 +274,20 @@ class MessageService:
             .limit(max_history)
         )
         history = list(result.scalars().all())
-        history.reverse()  # 按时间正序
-        
-        # 添加历史消息
+        history.reverse()
+
+        plain_history: List[Dict[str, str]] = []
         for msg in history:
             if msg.role in ["user", "assistant"]:
-                messages.append({
-                    "role": msg.role,
-                    "content": msg.content
-                })
-        
+                messages.append({"role": msg.role, "content": msg.content})
+                plain_history.append({"role": msg.role, "content": msg.content})
+
+        # 写入缓存（仅最近消息）
+        try:
+            await ConversationCache.set_messages(conv_id, plain_history, max_count=max_history)
+        except Exception:
+            pass
+
         return messages
     
     @staticmethod
@@ -306,9 +325,13 @@ class MessageService:
         db.add(assistant_message)
         await db.flush()
         await db.refresh(assistant_message)
-        
+
         # 更新会话
         await ConversationService.update_message_count(db, conv_id)
+        try:
+            await ConversationCache.append_message(conv_id, {"role": "assistant", "content": assistant_message.content})
+        except Exception:
+            pass
         
         return user_message, assistant_message
     
@@ -354,6 +377,10 @@ class MessageService:
                 
                 # 更新会话
                 await ConversationService.update_message_count(db, conv_id)
+                try:
+                    await ConversationCache.append_message(conv_id, {"role": "assistant", "content": full_content})
+                except Exception:
+                    pass
                 
                 # 返回最后一个块，包含完整信息
                 yield {
@@ -363,4 +390,3 @@ class MessageService:
                     "model_provider": assistant_message.model_provider,
                     "model_name": assistant_message.model_name
                 }
-

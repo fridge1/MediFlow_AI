@@ -4,18 +4,17 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.database import Base, GUID
 from sqlalchemy.orm import relationship
 
-from app.core.database import Base
 
 
 class Message(Base):
     """消息表"""
     __tablename__ = "messages"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    conversation_id = Column(GUID(), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True)
     
     # 消息内容
     role = Column(String(50), nullable=False, index=True)  # user, assistant, system
@@ -42,4 +41,3 @@ class Message(Base):
     
     def __repr__(self):
         return f"<Message(id={self.id}, role={self.role}, conversation_id={self.conversation_id})>"
-

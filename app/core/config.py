@@ -3,7 +3,7 @@
 """
 from typing import List, Optional
 from pydantic_settings import BaseSettings
-from pydantic import validator
+from pydantic import field_validator
 import json
 
 
@@ -54,8 +54,12 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     MAX_UPLOAD_SIZE: int = 10485760  # 10MB
     RATE_LIMIT_PER_MINUTE: int = 60
+    ENABLE_KB: bool = False
+    VECTOR_BACKEND: str = "memory"  # memory | milvus
+    CELERY_ALWAYS_EAGER: bool = True
+    KB_CALLBACK_SECRET: str = "kb-callback-secret"
     
-    @validator("CORS_ORIGINS", pre=True)
+    @field_validator("CORS_ORIGINS", mode="before")
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
             try:
@@ -71,4 +75,3 @@ class Settings(BaseSettings):
 
 # 全局配置实例
 settings = Settings()
-

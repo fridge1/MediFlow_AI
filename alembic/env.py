@@ -3,6 +3,8 @@ Alembic 环境配置
 """
 from logging.config import fileConfig
 import asyncio
+import sys
+from pathlib import Path
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -10,6 +12,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # 导入配置
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 from app.core.config import settings
 from app.core.database import Base
 
@@ -82,4 +85,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

@@ -27,6 +27,7 @@ from app.api.v1.applications import router as applications_router
 from app.api.v1.conversations import router as conversations_router
 from app.api.v1.messages import router as messages_router, message_router
 from app.api.v1.models import router as models_router
+from app.api.v1.knowledge import router as knowledge_router
 
 
 @asynccontextmanager
@@ -122,6 +123,7 @@ app.include_router(conversations_router, prefix="/api/v1")
 app.include_router(messages_router, prefix="/api/v1")
 app.include_router(message_router, prefix="/api/v1")
 app.include_router(models_router, prefix="/api/v1")
+app.include_router(knowledge_router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
@@ -132,4 +134,3 @@ if __name__ == "__main__":
         port=8000,
         reload=settings.DEBUG
     )
-

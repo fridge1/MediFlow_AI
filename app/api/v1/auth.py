@@ -51,10 +51,10 @@ async def login(
     if not user:
         raise UnauthorizedException("用户名或密码错误")
     
-    # 生成 Access Token (15分钟)
+    # 生成 Access Token（根据配置）
     access_token = create_access_token(
         data={"sub": str(user.id)},
-        expires_delta=timedelta(minutes=15)
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     
     # 生成 Refresh Token (7天)
@@ -69,7 +69,7 @@ async def login(
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "expires_in": 900  # 15分钟 = 900秒
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     }
 
 
@@ -113,10 +113,10 @@ async def refresh_token(
     if not saved_token or saved_token != refresh_token:
         raise UnauthorizedException("Refresh Token 已失效")
     
-    # 生成新的 Access Token
+    # 生成新的 Access Token（根据配置）
     new_access_token = create_access_token(
         data={"sub": str(user.id)},
-        expires_delta=timedelta(minutes=15)
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     
     # 可选：生成新的 Refresh Token（刷新链）
@@ -129,7 +129,7 @@ async def refresh_token(
         "access_token": new_access_token,
         "refresh_token": new_refresh_token,
         "token_type": "bearer",
-        "expires_in": 900
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     }
 
 
@@ -147,10 +147,10 @@ async def logout(
     token = authorization.replace("Bearer ", "")
     
     # 添加到黑名单（15分钟过期）
-    await TokenService.add_token_to_blacklist(token, current_user.id, expire_seconds=900)
+    from app.core.config import settings as _settings
+    await TokenService.add_token_to_blacklist(token, current_user.id, expire_seconds=_settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60)
     
     # 删除 refresh token
     await TokenService.delete_refresh_token(current_user.id)
     
     return {"message": "登出成功"}
-

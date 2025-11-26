@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   # PostgreSQL 数据库
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: medical_postgres
     environment:
       POSTGRES_DB: medical_db
@@ -22,7 +20,7 @@ services:
 
   # Redis 缓存
   redis:
-    image: redis:7-alpine
+    image: redis:7
     container_name: medical_redis
     command: redis-server --appendonly yes
     volumes:
@@ -49,6 +47,10 @@ services:
       - SECRET_KEY=your-secret-key-change-in-production
       - ENCRYPTION_KEY=your-encryption-key-32-chars!!
       - JWT_SECRET_KEY=your-jwt-secret-key-change-it
+      - ENABLE_KB=true
+      - VECTOR_BACKEND=memory
+      - CELERY_ALWAYS_EAGER=true
+      - KB_CALLBACK_SECRET=kb-callback-secret
     volumes:
       - ./app:/app/app
       - ./uploads:/app/uploads

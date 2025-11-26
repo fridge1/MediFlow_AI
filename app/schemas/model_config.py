@@ -4,6 +4,7 @@
 from typing import Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
+from pydantic import ConfigDict
 from uuid import UUID
 
 
@@ -15,6 +16,7 @@ class ModelConfigBase(BaseModel):
     is_default: bool = False
     is_active: bool = True
     config: Dict[str, Any] = Field(default_factory=dict)
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class ModelConfigCreate(ModelConfigBase):
@@ -38,11 +40,9 @@ class ModelConfigInDB(ModelConfigBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ModelConfigResponse(ModelConfigInDB):
     """模型配置响应模型"""
     api_key_masked: str = "sk-***"  # 掩码后的key
-

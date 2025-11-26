@@ -4,6 +4,7 @@
 from typing import Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
+from pydantic import ConfigDict
 from uuid import UUID
 
 
@@ -11,6 +12,7 @@ class MessageBase(BaseModel):
     """消息基础模型"""
     content: str = Field(..., min_length=1)
     role: str = Field(default="user", pattern="^(user|assistant|system)$")
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class MessageCreate(MessageBase):
@@ -44,8 +46,7 @@ class MessageInDB(MessageBase):
     feedback_comment: Optional[str]
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MessageResponse(MessageInDB):
@@ -65,4 +66,3 @@ class StreamMessageChunk(BaseModel):
     token_count: Optional[int] = None
     prompt_tokens: Optional[int] = None
     completion_tokens: Optional[int] = None
-

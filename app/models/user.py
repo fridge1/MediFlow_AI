@@ -4,17 +4,16 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Boolean, Column, String, DateTime
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.database import Base, GUID
 from sqlalchemy.orm import relationship
 
-from app.core.database import Base
 
 
 class User(Base):
     """用户表"""
     __tablename__ = "users"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(100), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
@@ -33,4 +32,3 @@ class User(Base):
     
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"
-

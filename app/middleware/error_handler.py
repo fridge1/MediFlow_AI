@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.utils.exceptions import BaseAPIException
 from app.utils.logger import logger
+from app.core.config import settings
 
 
 async def api_exception_handler(request: Request, exc: BaseAPIException):
@@ -44,7 +45,7 @@ async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
         content={
             "code": 500,
             "message": "数据库操作失败",
-            "detail": str(exc) if logger.level == "DEBUG" else None
+            "detail": str(exc) if settings.DEBUG else None
         }
     )
 
@@ -57,7 +58,7 @@ async def general_exception_handler(request: Request, exc: Exception):
         content={
             "code": 500,
             "message": "服务器内部错误",
-            "detail": str(exc) if logger.level == "DEBUG" else None
+            "detail": str(exc) if settings.DEBUG else None
         }
     )
 

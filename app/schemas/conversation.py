@@ -4,6 +4,7 @@
 from typing import Optional, Dict, Any, List, TYPE_CHECKING
 from datetime import datetime
 from pydantic import BaseModel, Field
+from pydantic import ConfigDict
 from uuid import UUID
 
 if TYPE_CHECKING:
@@ -13,7 +14,8 @@ if TYPE_CHECKING:
 class ConversationBase(BaseModel):
     """会话基础模型"""
     title: Optional[str] = Field(None, max_length=255)
-    conv_metadata: Dict[str, Any] = Field(default_factory=dict)
+    conv_metadata: Dict[str, Any] = Field(default_factory=dict, validation_alias="metadata")
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ConversationCreate(ConversationBase):
@@ -26,7 +28,8 @@ class ConversationUpdate(BaseModel):
     title: Optional[str] = Field(None, max_length=255)
     status: Optional[str] = Field(None, pattern="^(active|archived|deleted)$")
     summary: Optional[str] = None
-    conv_metadata: Optional[Dict[str, Any]] = None
+    conv_metadata: Optional[Dict[str, Any]] = Field(None, validation_alias="metadata")
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ConversationInDB(ConversationBase):
@@ -40,8 +43,7 @@ class ConversationInDB(ConversationBase):
     updated_at: datetime
     last_message_at: Optional[datetime]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConversationResponse(ConversationInDB):
@@ -52,4 +54,3 @@ class ConversationResponse(ConversationInDB):
 class ConversationWithMessages(ConversationResponse):
     """带消息的会话响应"""
     messages: List["MessageResponse"] = []
-

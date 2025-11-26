@@ -4,20 +4,19 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Text, Integer, Boolean, DateTime, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.database import Base, GUID
 from sqlalchemy.orm import relationship
 
-from app.core.database import Base
 
 
 class Application(Base):
     """应用配置模板表"""
     __tablename__ = "applications"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     description = Column(Text)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     icon = Column(String(255))
     status = Column(String(50), default="draft", nullable=False, index=True)  # draft, published
     app_type = Column(String(50), default="chatbot", nullable=False)  # chatbot, completion, agent
@@ -44,4 +43,3 @@ class Application(Base):
     
     def __repr__(self):
         return f"<Application(id={self.id}, name={self.name}, status={self.status})>"
-

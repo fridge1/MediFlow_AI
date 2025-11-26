@@ -27,8 +27,6 @@ class ApplicationListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
-from app.api.deps import get_current_user
-from app.models.user import User
 
 
 router = APIRouter(prefix="/applications", tags=["应用管理"])
@@ -52,7 +50,7 @@ async def create_application(
 async def list_applications(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    status: Optional[str] = Query(None, regex="^(draft|published)$"),
+    status: Optional[str] = Query(None, pattern="^(draft|published)$"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -149,4 +147,3 @@ async def publish_application(
     app = await ApplicationService.publish_application(db, app_id, current_user.id)
     await db.commit()
     return app
-

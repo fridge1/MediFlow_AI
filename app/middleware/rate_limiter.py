@@ -30,14 +30,16 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         if not client_id:
             return await call_next(request)
         
-        # 检查限流
-        is_allowed, remaining = await self._check_rate_limit(client_id, request.url.path)
+        # 端点级限流
+        limit = self._get_endpoint_limit(request.url.path)
+        from app.middleware.rate_limiter import AdvancedRateLimiter
+        is_allowed, remaining = await AdvancedRateLimiter.check_limit(client_id, request.url.path, default_limit=limit)
         
         if not is_allowed:
             logger.warning(f"Rate limit exceeded for {client_id} on {request.url.path}")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"请求过于频繁，请稍后再试。限制：{self.rate_limit}次/分钟",
+                detail=f"请求过于频繁，请稍后再试。限制：{limit}次/分钟",
                 headers={"Retry-After": "60"}
             )
         
@@ -45,7 +47,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         
         # 添加限流信息到响应头
-        response.headers["X-RateLimit-Limit"] = str(self.rate_limit)
+        response.headers["X-RateLimit-Limit"] = str(limit)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         response.headers["X-RateLimit-Reset"] = str(int(time.time()) + 60)
         
@@ -61,6 +63,14 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
             "/",
         ]
         return any(path.startswith(skip_path) for skip_path in skip_paths)
+
+    def _get_endpoint_limit(self, path: str) -> int:
+        """获取端点对应的限流阈值"""
+        from app.middleware.rate_limiter import AdvancedRateLimiter
+        for pattern, pattern_limit in AdvancedRateLimiter.ENDPOINT_LIMITS.items():
+            if path.startswith(pattern):
+                return pattern_limit
+        return self.rate_limit
     
     async def _get_client_id(self, request: Request) -> Optional[str]:
         """获取客户端标识"""
@@ -118,10 +128,11 @@ class AdvancedRateLimiter:
     
     # 端点限流配置
     ENDPOINT_LIMITS = {
-        "/api/v1/auth/register": 5,  # 注册：5次/分钟
-        "/api/v1/auth/login": 10,     # 登录：10次/分钟
-        "/api/v1/conversations": 30,  # 创建会话：30次/分钟
-        "/api/v1/messages": 20,       # 发送消息：20次/分钟
+        "/api/v1/auth/register": 5,
+        "/api/v1/auth/login": 10,
+        "/api/v1/conversations": 30,
+        "/api/v1/messages": 20,
+        "/api/v1/messages/stream": 15,
     }
     
     @staticmethod
@@ -163,4 +174,3 @@ class AdvancedRateLimiter:
         except Exception as e:
             logger.error(f"Advanced rate limit check error: {e}")
             return True, limit
-

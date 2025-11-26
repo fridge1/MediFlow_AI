@@ -44,14 +44,25 @@ async def create_conversation(
     """
     conv = await ConversationService.create_conversation(db, current_user.id, conv_data)
     await db.commit()
-    return conv
+    return ConversationResponse.model_validate({
+        "id": conv.id,
+        "user_id": conv.user_id,
+        "title": conv.title,
+        "status": conv.status,
+        "summary": conv.summary,
+        "conv_metadata": conv.conv_metadata or {},
+        "message_count": conv.message_count,
+        "created_at": conv.created_at,
+        "updated_at": conv.updated_at,
+        "last_message_at": conv.last_message_at,
+    })
 
 
 @router.get("", response_model=ConversationListResponse)
 async def list_conversations(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    status: str = Query("active", regex="^(active|archived|deleted)$"),
+    status: str = Query("active", pattern="^(active|archived|deleted)$"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -88,7 +99,18 @@ async def get_conversation(
     if not conv:
         from app.utils.exceptions import NotFoundException
         raise NotFoundException("会话不存在")
-    return conv
+    return ConversationResponse.model_validate({
+        "id": conv.id,
+        "user_id": conv.user_id,
+        "title": conv.title,
+        "status": conv.status,
+        "summary": conv.summary,
+        "conv_metadata": conv.conv_metadata or {},
+        "message_count": conv.message_count,
+        "created_at": conv.created_at,
+        "updated_at": conv.updated_at,
+        "last_message_at": conv.last_message_at,
+    })
 
 
 @router.put("/{conv_id}", response_model=ConversationResponse)
@@ -105,7 +127,18 @@ async def update_conversation(
         db, conv_id, current_user.id, conv_data
     )
     await db.commit()
-    return conv
+    return ConversationResponse.model_validate({
+        "id": conv.id,
+        "user_id": conv.user_id,
+        "title": conv.title,
+        "status": conv.status,
+        "summary": conv.summary,
+        "conv_metadata": conv.conv_metadata or {},
+        "message_count": conv.message_count,
+        "created_at": conv.created_at,
+        "updated_at": conv.updated_at,
+        "last_message_at": conv.last_message_at,
+    })
 
 
 @router.delete("/{conv_id}")
@@ -140,4 +173,3 @@ async def get_conversation_messages(
         "items": messages,
         "total": len(messages)
     }
-

@@ -4,18 +4,17 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.database import Base, GUID
 from sqlalchemy.orm import relationship
 
-from app.core.database import Base
 
 
 class Conversation(Base):
     """会话表 - 独立的对话容器"""
     __tablename__ = "conversations"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(255))
     status = Column(String(50), default="active", nullable=False, index=True)  # active, archived, deleted
     summary = Column(Text)
@@ -34,4 +33,3 @@ class Conversation(Base):
     
     def __repr__(self):
         return f"<Conversation(id={self.id}, title={self.title}, status={self.status})>"
-

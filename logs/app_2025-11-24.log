@@ -18979,3 +18979,6 @@ pydantic_core._pydantic_core.PydanticSerializationError: Unable to serialize unk
 2025-11-24 03:24:59.479 | INFO     | app.main:lifespan:48 - Medical AI Platform v1.0.0 启动成功
 2025-11-24 03:26:32.940 | INFO     | app.services.conversation_service:create_conversation:39 - 创建会话: 36739b77-5bcb-4415-9dbb-cebdb5b0e7a1, 用户: c18c593f-8fd4-48ce-b1d5-33cd6c1af922
 2025-11-24 03:26:33.180 | ERROR    | app.middleware.error_handler:api_exception_handler:15 - API 异常: Token 已失效，请重新登录, 详情: None
+2025-11-24 09:10:03.514 | INFO     | app.main:lifespan:53 - 应用关闭中...
+2025-11-24 09:10:03.537 | INFO     | app.main:lifespan:57 - 数据库连接已关闭
+2025-11-24 09:10:03.539 | INFO     | app.main:lifespan:61 - Redis 连接已关闭
