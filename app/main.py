@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from contextlib import asynccontextmanager
+from starlette.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
@@ -124,6 +125,9 @@ app.include_router(messages_router, prefix="/api/v1")
 app.include_router(message_router, prefix="/api/v1")
 app.include_router(models_router, prefix="/api/v1")
 app.include_router(knowledge_router, prefix="/api/v1")
+
+# 静态页面挂载
+app.mount("/ui", StaticFiles(directory="frontend", html=True), name="ui")
 
 
 if __name__ == "__main__":

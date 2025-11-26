@@ -53,6 +53,7 @@ services:
       - KB_CALLBACK_SECRET=kb-callback-secret
     volumes:
       - ./app:/app/app
+      - ./frontend:/app/frontend
       - ./uploads:/app/uploads
       - ./logs:/app/logs
     ports:
@@ -67,4 +68,3 @@ services:
 volumes:
   postgres_data:
   redis_data:
-

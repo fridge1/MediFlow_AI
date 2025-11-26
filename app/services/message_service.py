@@ -44,7 +44,7 @@ class MessageService:
             content=message_data.content,
             model_provider=message_data.model_provider,
             model_name=message_data.model_name,
-            model_config=message_data.model_config or {}
+            model_config=message_data.model_params or {}
         )
         db.add(db_message)
         await db.flush()
@@ -199,7 +199,7 @@ class MessageService:
                         "model_name": config.model_name,
                         "api_key": api_key,
                         "api_base": config.api_base,
-                        "config": {**config.config, **(message_data.model_config or {})}
+                        "config": {**config.config, **(message_data.model_params or {})}
                     }
         
         # 2. 应用模板配置（中优先级）

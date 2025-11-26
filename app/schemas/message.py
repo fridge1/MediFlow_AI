@@ -20,7 +20,7 @@ class MessageCreate(MessageBase):
     # 可选的模型配置(请求级别)
     model_provider: Optional[str] = None
     model_name: Optional[str] = None
-    model_config: Optional[Dict[str, Any]] = None
+    model_params: Optional[Dict[str, Any]] = Field(None, validation_alias="model_config", serialization_alias="model_config")
     
     # 可选引用应用配置
     use_application_config: Optional[str] = None  # application_id
@@ -38,7 +38,7 @@ class MessageInDB(MessageBase):
     conversation_id: UUID
     model_provider: Optional[str]
     model_name: Optional[str]
-    model_config: Dict[str, Any]
+    model_params: Dict[str, Any] = Field(default_factory=dict, validation_alias="model_config", serialization_alias="model_config")
     token_count: int
     prompt_tokens: int
     completion_tokens: int
